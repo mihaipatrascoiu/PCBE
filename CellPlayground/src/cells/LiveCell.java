@@ -7,7 +7,7 @@ import java.util.Random;
 import edu.princeton.cs.algs4.StdDraw;
 import playground.Playground;
 
-public abstract class LiveCell extends Cell {
+public abstract class LiveCell extends Cell implements Runnable {
 	public static final double TIME_FULL = 1000;
 	public static final double TIME_TO_STARVE = 5000;
 	protected Playground playground;
@@ -17,6 +17,8 @@ public abstract class LiveCell extends Cell {
 	protected double starveTime;		// time duration from starving until cell dies
 	protected boolean hungry;			// shows if cell is hungry or not
 	protected int fedCounter;			// number of times the cell has fed
+	
+	protected boolean running = true;	// asserts whether thread should be running or not
 	
 	/**
 	 * Initializes a new, hungry cell with random position and velocity.
@@ -35,6 +37,26 @@ public abstract class LiveCell extends Cell {
 		hungry = true;
 		starveTime = LiveCell.TIME_TO_STARVE;
 		fedCounter = 0;
+	}
+	
+	
+	/**
+	 * Moves the cell every <tt>dt</tt> unit of time. During this period,
+	 * the thread goes to sleep.
+	 */
+	public void run() {
+		long dt = (long) Playground.dt;
+		
+		try {
+			while(running) {
+				// move the cell
+				move(dt);
+				// put the thread to sleep
+				Thread.sleep(dt);
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -81,16 +103,6 @@ public abstract class LiveCell extends Cell {
 	protected abstract void reproduce();
 	
 	/**
-	 * Returns whether the cell is ready to reproduce or not.
-	 */
-	protected abstract boolean getReadyStatus();
-	
-	/**
-	 * Resets the ready status of the cell.
-	 */
-	protected abstract void resetReadyStatus();
-	
-	/**
 	 * Handles cell collisions with exterior walls.
 	 */
 	private void checkExteriorWallCollisions() {
@@ -118,11 +130,11 @@ public abstract class LiveCell extends Cell {
 	 * This function should be called only when the alive cell is hungry.
 	 */
 	private void checkFoodCellCollisions() {
-		List<Cell> foodCells = playground.getFoodCells();
+		List<FoodCell> foodCells = playground.getFoodCells();
 		
-		for (int i = foodCells.size() - 1; i >= 0; i--) {
+		for (int i = 0; i < foodCells.size(); i++) {
 			if (intersects(foodCells.get(i))) {
-				foodCells.remove(i);		// remove the eaten food cell
+				playground.removeCell(foodCells.get(i));			// remove the eaten food cell
 				
 				radius = Math.min(0.065, radius + 0.002);			// increase the cell's size
 				fedCounter++;										// increase the cell's fed counter
@@ -166,7 +178,7 @@ public abstract class LiveCell extends Cell {
 		Random random = new Random();
 		
 		// remove the cell
-		playground.removeLiveCell(this);
+		playground.removeCell(this);
 		
 		// create between 1 - 5 new food cells in a 5*radius distance
 		int n = random.nextInt(5) + 1;
@@ -178,16 +190,19 @@ public abstract class LiveCell extends Cell {
 			} while ((px < 0 || px > 1) || (py < 0 || px > 1));
 			
 			// create the new food cell
-			playground.addFoodCell(new FoodCell(px, py));
+			playground.addCell(new FoodCell(px, py));
 		}
+		
+		// stop this thread
+		running = false;
 	}
 	
 	/**
-	 * Random velocity of the cell between [-0.3, 0.3) times the fundamental unit.
+	 * Random velocity of the cell between [-0.1, 0.1) times the fundamental unit.
 	 * @return velocity of the cell
 	 */
 	private double velocity() {
 		// formula for value in [a, b): a + random() * (b - a)
-		return (-0.3 + Math.random() * 0.6) * Playground.unit;
+		return (-0.1 + Math.random() * 0.2) * Playground.unit;
 	}
 }

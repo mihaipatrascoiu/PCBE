@@ -1,3 +1,2 @@
-1.) Implement each live cell as a separate Thread.
-2.) Refine design as to avoid NOPs.
+1.) Investigate program interrupt occurrence
 

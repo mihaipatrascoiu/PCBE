@@ -36,7 +36,8 @@ public class NonSexualCell extends LiveCell {
 	protected void reproduce() {
 		double px, py;
 		
-		playground.removeLiveCell(this);
+		// remove the cell
+		playground.removeCell(this);
 		
 		for (int i = 0; i < 2; i++) {
 			// search for a  position inside the board within this cell's radius
@@ -46,23 +47,10 @@ public class NonSexualCell extends LiveCell {
 			} while ((px < 0 || px > 1) || (py < 0 || px > 1));
 			
 			// create the new live cell
-			playground.addLiveCell(new NonSexualCell(playground, px, py, radius / 2));
+			playground.addCell(new NonSexualCell(playground, px, py, radius / 2));
 		}
-	}
-	
-	/**
-	 * NOP
-	 */
-	@Override
-	protected boolean getReadyStatus() {
-		return false;
-	}
-	
-	/**
-	 * NOP
-	 */
-	@Override
-	protected  void resetReadyStatus() {
 		
-	};
+		// stop the thread
+		running = false;
+	}
 }

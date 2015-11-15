@@ -5,7 +5,7 @@ import java.util.List;
 
 import playground.Playground;
 
-public class SexualCell extends LiveCell {
+public class SexualCell extends LiveCell implements ReadyStatusInterface {
 	private boolean readyStatus;
 	
 	/**
@@ -61,14 +61,14 @@ public class SexualCell extends LiveCell {
 	 * Returns whether the cell is ready to reproduce or not.
 	 * A cell is considered ready when it has fed 10 times.
 	 */
-	protected boolean getReadyStatus() {
+	public boolean getReadyStatus() {
 		return readyStatus;
 	}
 	
 	/**
 	 * Resets the ready status of the cell.
 	 */
-	protected void resetReadyStatus() {
+	public void resetReadyStatus() {
 		readyStatus = false;
 		color = Color.red;
 		fedCounter = 0;
@@ -80,16 +80,16 @@ public class SexualCell extends LiveCell {
 	 * a new sexual cell will be spawned.
 	 */
 	private void checkLiveCellCollisions() {
-		List<LiveCell> liveCells = playground.getLiveCells();
+		List<SexualCell> sexualCells = playground.getSexualCells();
 		double px, py;
 		
-		for (int i = 0; i < liveCells.size(); i++) {
+		for (int i = 0; i < sexualCells.size(); i++) {
 			// avoid reproducing with itself
-			if (liveCells.get(i).equals(this)) {
+			if (sexualCells.get(i).equals(this)) {
 				continue;
 			}
 			
-			if (intersects(liveCells.get(i)) && liveCells.get(i).getReadyStatus()) {
+			if (intersects(sexualCells.get(i)) && sexualCells.get(i).getReadyStatus()) {
 				// find position inside the board within this cell's radius
 				do {
 					px = (-1 + Math.random() * 2) * radius + rx;
@@ -97,11 +97,11 @@ public class SexualCell extends LiveCell {
 				} while ((px < 0 || px > 1) || (py < 0 || px > 1));
 				
 				// create the new live cell
-				playground.addLiveCell(new SexualCell(playground, px, py));
+				playground.addCell(new SexualCell(playground, px, py));
 				
 				// reset ready status
 				resetReadyStatus();
-				liveCells.get(i).resetReadyStatus();
+				sexualCells.get(i).resetReadyStatus();
 			}
 		}
 	}

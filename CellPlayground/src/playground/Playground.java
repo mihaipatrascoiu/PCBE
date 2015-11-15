@@ -1,6 +1,5 @@
 package playground;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -19,8 +18,10 @@ public class Playground extends Thread {
 	public static final int CANVAS_SIZE_X = 800;
 	public static final int CANVAS_SIZE_Y = 800;
 	
-	private List<Cell> foodCells;
-	private List<LiveCell> liveCells;
+	private List<Cell> drawableCells;
+	private List<FoodCell> foodCells;
+	private List<SexualCell> sexualCells;
+	private List<NonSexualCell> nonSexualCells;
 	
 	/**
 	 * Creates a new playground.
@@ -29,54 +30,61 @@ public class Playground extends Thread {
 	 */
 	public Playground(int numberFoodCells, int numberCells) {
 		Random random = new Random();
+		drawableCells = new LinkedList<Cell>();
 		
 		// create the food cells
-		List<Cell> _foodCells = new LinkedList<Cell>();
+		foodCells = new LinkedList<FoodCell>();
 		for (int i = 0; i < numberFoodCells; i++) {
-			_foodCells.add(new FoodCell());
+			this.addCell(new FoodCell());
 		}
-		foodCells = Collections.synchronizedList(_foodCells);
 
 		// create the live cells
-		List<LiveCell> _liveCells = new LinkedList<LiveCell>();
+		sexualCells = new LinkedList<SexualCell>();
+		nonSexualCells = new LinkedList<NonSexualCell>();
 		for (int i = 0; i < numberCells; i++) {
-			_liveCells.add((random.nextBoolean() == true)	?	new SexualCell(this)	:	new NonSexualCell(this));
+			if(random.nextBoolean() == true){
+				this.addCell(new SexualCell(this));				
+			} else {
+				this.addCell(new NonSexualCell(this));
+			}
 		}
-		liveCells = Collections.synchronizedList(_liveCells);
 	}
 	
-	/**cd
-	 * Draws all the food and alive cells on the canvas.
+	/**
+	 * Draws all the cells on the canvas.
 	 */
 	private void redraw() {
+		// set up to avoid concurrency problems
 		StdDraw.clear();
+		drawableCells.clear();
+		drawableCells.addAll(foodCells);
+		drawableCells.addAll(sexualCells);
+		drawableCells.addAll(nonSexualCells);
 		
-		// draw food cells
-		for (int i = 0; i < foodCells.size(); i++) {
-			foodCells.get(i).draw();
-		}
-		
-		// draw live cells
-		for (int i = 0; i < liveCells.size(); i++) {
-			liveCells.get(i).draw();
+		// draw all cells
+		for (Cell cell: drawableCells) {
+			cell.draw();
 		}
 		
 		StdDraw.show(20);
 	}
 	
 	/**
-	 * Method that simulates the movement of cells.
-	 * Each <tt>dt</tt> units of time, a movement is made. 
+	 * Starts the thread execution of each cell inside the playground.
+	 * Eve <tt>dt</tt> units of time, the playground is redrawn. 
 	 */
 	public void run() {
 	
+		for(int i = 0; i < sexualCells.size(); i++) {
+			new Thread(sexualCells.get(i)).start();
+		}
+		
+		for(int i = 0; i < nonSexualCells.size(); i++) {
+			new Thread(nonSexualCells.get(i)).start();
+		}
+		
 		try {
 			while (true) {
-				// move all live cells
-				for (int i = liveCells.size() - 1; i >= 0; i--) { 
-					liveCells.get(i).move(dt);
-				}
-				
 				// draw the cells on the canvas
 				redraw();
 				// sleep for dt units of time
@@ -87,46 +95,77 @@ public class Playground extends Thread {
 		}
 	}
 	
-	/**
-	 * Removes a given live cell from the playground.
-	 * @param cell the given live cell
-	 */
-	public void removeLiveCell(LiveCell liveCell) {
-		liveCells.remove(liveCell);
-	}
+	/* Methods for adding cells to the playground. */
 	
-	/**
-	 * Adds a given live cell to the playground.
-	 * @param liveCell the given live cell
-	 */
-	public void addLiveCell(LiveCell liveCell) {
-		liveCells.add(liveCell);
-	}
-	
-	/**
-	 * Adds a given food cell to the playground.
-	 * @param foodCell the given food cell
-	 */
-	public void addFoodCell(FoodCell foodCell) {
+	public synchronized void addCell(FoodCell foodCell) {
 		foodCells.add(foodCell);
 	}
 	
-	public List<LiveCell> getLiveCells() {
-		return liveCells;
+	public synchronized void addCell(SexualCell sexualCell){
+		sexualCells.add(sexualCell);
+		new Thread(sexualCell).start();
 	}
 	
-	public List<Cell> getFoodCells() {
-		return foodCells;
+	public synchronized void addCell(NonSexualCell nonSexualCell){
+		nonSexualCells.add(nonSexualCell);
+		new Thread(nonSexualCell).start();
+	}
+	
+	/* Methods for removing cells from the playground. */
+	
+	public synchronized void removeCell(FoodCell cell) {
+		foodCells.remove(cell);
+	}
+	
+	public synchronized void removeCell(LiveCell cell) {
+		if (cell instanceof SexualCell) {
+			sexualCells.remove(cell);
+		} else if (cell instanceof NonSexualCell) {
+			nonSexualCells.remove(cell);
+		}
+	}
+	
+	/**
+	 * Returns the list of food cells.
+	 * @return food cells list
+	 */
+	public synchronized List<FoodCell> getFoodCells() {
+		return new LinkedList<FoodCell>(foodCells);
+	}
+	
+	/**
+	 * Returns the list of sexual cells.
+	 * @return sexual cells list
+	 */
+	public synchronized List<SexualCell> getSexualCells(){
+		return new LinkedList<SexualCell>(sexualCells);
+	}
+	
+	/**
+	 * Returns the list of non sexual cells.
+	 * @return non sexual cells list
+	 */
+	public synchronized List<NonSexualCell> getNonSexualCells(){
+		return new LinkedList<NonSexualCell>(nonSexualCells);
 	}
 	
 	public static void main(String[] args) {
+		int foodCells = 100;		// default food cells value
+		int liveCells = 10;			// default live cells value
+		
+		// check input
+		if (args.length == 2) {
+			foodCells = Integer.parseInt(args[0]);
+			liveCells = Integer.parseInt(args[1]);
+		}
+		
 		// set up the canvas
 		StdDraw.setCanvasSize(CANVAS_SIZE_X, CANVAS_SIZE_Y);
 		// turn on animation mode
 		StdDraw.show(0);
 		
 		// create the playground and start simulation
-		Playground playground = new Playground(100, 5);
+		Playground playground = new Playground(foodCells, liveCells);
 		playground.run();
 	}
 }
