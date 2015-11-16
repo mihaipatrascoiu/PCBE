@@ -1,7 +1,6 @@
 package cells;
 
 import java.awt.Color;
-import java.util.List;
 
 import playground.Playground;
 
@@ -80,16 +79,15 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 	 * a new sexual cell will be spawned.
 	 */
 	private void checkLiveCellCollisions() {
-		List<SexualCell> sexualCells = playground.getSexualCells();
 		double px, py;
 		
-		for (int i = 0; i < sexualCells.size(); i++) {
+		for (SexualCell sexualCell: playground.getSexualCells()) {
 			// avoid reproducing with itself
-			if (sexualCells.get(i).equals(this)) {
+			if (sexualCell.equals(this)) {
 				continue;
 			}
 			
-			if (intersects(sexualCells.get(i)) && sexualCells.get(i).getReadyStatus()) {
+			if (intersects(sexualCell) && sexualCell.getReadyStatus()) {
 				// find position inside the board within this cell's radius
 				do {
 					px = (-1 + Math.random() * 2) * radius + rx;
@@ -101,7 +99,7 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 				
 				// reset ready status
 				resetReadyStatus();
-				sexualCells.get(i).resetReadyStatus();
+				sexualCell.resetReadyStatus();
 			}
 		}
 	}

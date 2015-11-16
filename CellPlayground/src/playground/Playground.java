@@ -1,5 +1,6 @@
 package playground;
 
+import java.awt.Color;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -11,13 +12,14 @@ import cells.NonSexualCell;
 import cells.SexualCell;
 import edu.princeton.cs.algs4.StdDraw;
 
-public class Playground extends Thread {
+public class Playground {
 	public static final double dt = (double) 1000 / 60;			// refresh rate of 60 Hz
 	public static final double unit = (double) 1 / 60 / 10;		// fundamental unit to traverse canvas in 1 second
 	
 	public static final int CANVAS_SIZE_X = 800;
 	public static final int CANVAS_SIZE_Y = 800;
 	
+	private long startTime = 0;
 	private List<Cell> drawableCells;
 	private List<FoodCell> foodCells;
 	private List<SexualCell> sexualCells;
@@ -42,7 +44,7 @@ public class Playground extends Thread {
 		sexualCells = new LinkedList<SexualCell>();
 		nonSexualCells = new LinkedList<NonSexualCell>();
 		for (int i = 0; i < numberCells; i++) {
-			if(random.nextBoolean() == true){
+			if (random.nextBoolean() == true) {
 				this.addCell(new SexualCell(this));				
 			} else {
 				this.addCell(new NonSexualCell(this));
@@ -66,6 +68,11 @@ public class Playground extends Thread {
 			cell.draw();
 		}
 		
+		// draw time elapsed
+		double timeElapsed = System.currentTimeMillis() - startTime;
+		StdDraw.setPenColor(Color.black);
+		StdDraw.text(0.95, 0.97, String.format("%ss", (timeElapsed / 1000)));
+		
 		StdDraw.show(20);
 	}
 	
@@ -74,24 +81,20 @@ public class Playground extends Thread {
 	 * Eve <tt>dt</tt> units of time, the playground is redrawn. 
 	 */
 	public void run() {
-	
-		for(int i = 0; i < sexualCells.size(); i++) {
-			new Thread(sexualCells.get(i)).start();
+		startTime = System.currentTimeMillis();
+		
+		// start thread execution of cells
+		for (SexualCell sexualCell: sexualCells) {
+			new Thread(sexualCell).start();
 		}
 		
-		for(int i = 0; i < nonSexualCells.size(); i++) {
-			new Thread(nonSexualCells.get(i)).start();
+		for (NonSexualCell nonSexualCell: nonSexualCells) {
+			new Thread(nonSexualCell).start();
 		}
 		
-		try {
-			while (true) {
-				// draw the cells on the canvas
-				redraw();
-				// sleep for dt units of time
-				Playground.sleep((long) dt);
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		// draw the cells on the canvas
+		while (true) {
+			redraw();
 		}
 	}
 	
@@ -150,22 +153,27 @@ public class Playground extends Thread {
 	}
 	
 	public static void main(String[] args) {
-		int foodCells = 100;		// default food cells value
-		int liveCells = 10;			// default live cells value
-		
-		// check input
-		if (args.length == 2) {
-			foodCells = Integer.parseInt(args[0]);
-			liveCells = Integer.parseInt(args[1]);
+		try {
+			int foodCells = 100;		// default food cells value
+			int liveCells = 10;			// default live cells value
+			
+			// check input
+			if (args.length == 2) {
+				foodCells = Integer.parseInt(args[0]);
+				liveCells = Integer.parseInt(args[1]);
+			}
+			
+			// set up the canvas
+			StdDraw.setCanvasSize(CANVAS_SIZE_X, CANVAS_SIZE_Y);
+			// turn on animation mode
+			StdDraw.show(0);
+			
+			// create the playground and start the simulation
+			Playground playground = new Playground(foodCells, liveCells);
+			playground.run();
+		} catch (Throwable ex) {
+			System.err.println("Uncaught exception - " + ex.getMessage());
+	        ex.printStackTrace();
 		}
-		
-		// set up the canvas
-		StdDraw.setCanvasSize(CANVAS_SIZE_X, CANVAS_SIZE_Y);
-		// turn on animation mode
-		StdDraw.show(0);
-		
-		// create the playground and start simulation
-		Playground playground = new Playground(foodCells, liveCells);
-		playground.run();
 	}
 }

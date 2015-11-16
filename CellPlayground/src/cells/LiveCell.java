@@ -1,7 +1,6 @@
 package cells;
 
 import java.awt.Color;
-import java.util.List;
 import java.util.Random;
 
 import edu.princeton.cs.algs4.StdDraw;
@@ -51,8 +50,11 @@ public abstract class LiveCell extends Cell implements Runnable {
 			while(running) {
 				// move the cell
 				move(dt);
+				
 				// put the thread to sleep
-				Thread.sleep(dt);
+				synchronized(this) {
+					Thread.sleep(dt);
+				}
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -130,11 +132,9 @@ public abstract class LiveCell extends Cell implements Runnable {
 	 * This function should be called only when the alive cell is hungry.
 	 */
 	private void checkFoodCellCollisions() {
-		List<FoodCell> foodCells = playground.getFoodCells();
-		
-		for (int i = 0; i < foodCells.size(); i++) {
-			if (intersects(foodCells.get(i))) {
-				playground.removeCell(foodCells.get(i));			// remove the eaten food cell
+		for (FoodCell foodCell: playground.getFoodCells()) {
+			if (intersects(foodCell)) {
+				playground.removeCell(foodCell);			// remove the eaten food cell
 				
 				radius = Math.min(0.065, radius + 0.002);			// increase the cell's size
 				fedCounter++;										// increase the cell's fed counter
@@ -154,6 +154,7 @@ public abstract class LiveCell extends Cell implements Runnable {
 	 * @param dt amount of time passed
 	 */
 	private void handleTimers(double dt) {
+		
 		if (hungry == true) {
 			starveTime -= dt;
 			
