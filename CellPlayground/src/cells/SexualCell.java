@@ -4,8 +4,7 @@ import java.awt.Color;
 
 import playground.Playground;
 
-public class SexualCell extends LiveCell implements ReadyStatusInterface {
-	private boolean readyStatus;
+public class SexualCell extends LiveCell {
 	
 	/**
 	 * Initializes a new, hungry cell with random position and velocity.
@@ -14,7 +13,6 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 	public SexualCell(Playground playground) {
 		super(playground);
 		color = Color.red;
-		readyStatus = false;
 	}
 	
 	/**
@@ -24,7 +22,6 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 	public SexualCell(Playground playground, double rx, double ry) {
 		super(playground);
 		color = Color.red;
-		readyStatus = false;
 		this.rx = rx;
 		this.ry = ry;
 	}
@@ -47,13 +44,22 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 	}
 	
 	/**
+	 * The cell death scenario for a sexual cell.
+	 * The cell will be removed from the playground and its Thread stopped.
+	 */
+	@Override
+	protected void cellDeath() {
+		playground.removeCell(this);
+		super.cellDeath();
+	}
+	
+	/**
 	 * When the cell is set to reproduce, it will change its color. Once it finds another 
 	 * sexual cell ready to reproduce, they will both revert to their initial color.
 	 */
 	@Override
 	protected void reproduce() {
 		color = Color.magenta;
-		readyStatus = true;
 	}
 	
 	/**
@@ -61,18 +67,16 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 	 * A cell is considered ready when it has fed 10 times.
 	 */
 	public boolean getReadyStatus() {
-		return readyStatus;
+		return color == Color.magenta;
 	}
 	
 	/**
 	 * Resets the ready status of the cell.
 	 */
 	public void resetReadyStatus() {
-		readyStatus = false;
 		color = Color.red;
 		fedCounter = 0;
 	}
-	
 	
 	/**
 	 * Checks collisions with other sexual cells. If both are ready to reproduce,
@@ -100,6 +104,7 @@ public class SexualCell extends LiveCell implements ReadyStatusInterface {
 				// reset ready status
 				resetReadyStatus();
 				sexualCell.resetReadyStatus();
+				break;
 			}
 		}
 	}

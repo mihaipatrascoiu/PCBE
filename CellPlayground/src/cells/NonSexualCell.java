@@ -13,7 +13,6 @@ public class NonSexualCell extends LiveCell {
 	public NonSexualCell(Playground playground) {
 		super(playground);
 		color = Color.green;
-		hungry = false;
 	}
 	
 	/**
@@ -27,7 +26,17 @@ public class NonSexualCell extends LiveCell {
 		this.ry = ry;
 		this.radius = radius;
 	}
-
+	
+	/**
+	 * The cell death scenario for a non sexual cell.
+	 * The cell will be removed from the playground and its Thread stopped.
+	 */
+	@Override
+	protected void cellDeath() {
+		playground.removeCell(this);
+		super.cellDeath();
+	}
+	
 	/**
 	 * Once the cell is ready to reproduce, it will split into two other cells, 
 	 * with radius half of the original size.

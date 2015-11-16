@@ -68,6 +68,7 @@ public abstract class LiveCell extends Cell implements Runnable {
 	 * @param dt amount of time passed
 	 */
 	public void move(double dt) {
+		
 		// update position
 		rx += vx * dt;
 		ry += vy * dt;
@@ -171,15 +172,12 @@ public abstract class LiveCell extends Cell implements Runnable {
 	}
 	
 	/**
-	 * Handle the death of a cell in case its starve timer reached zero.
-	 * @param cell the cell whose starve time expired
+	 * Handles the death of a cell in case its starve timer reached zero.
+	 * Also sets the <tt>running</tt> flag for the Thread, causing it to stop.
 	 */
-	private void cellDeath() {
+	protected void cellDeath() {
 		double px, py;
 		Random random = new Random();
-		
-		// remove the cell
-		playground.removeCell(this);
 		
 		// create between 1 - 5 new food cells in a 5*radius distance
 		int n = random.nextInt(5) + 1;
@@ -199,11 +197,11 @@ public abstract class LiveCell extends Cell implements Runnable {
 	}
 	
 	/**
-	 * Random velocity of the cell between [-0.1, 0.1) times the fundamental unit.
+	 * Random velocity of the cell between [-0.3, 0.3) times the fundamental unit.
 	 * @return velocity of the cell
 	 */
 	private double velocity() {
 		// formula for value in [a, b): a + random() * (b - a)
-		return (-0.1 + Math.random() * 0.2) * Playground.unit;
+		return (-0.3 + Math.random() * 0.6) * Playground.unit;
 	}
 }
